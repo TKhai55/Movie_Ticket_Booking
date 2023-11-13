@@ -5,14 +5,16 @@ using Movie_Ticket_Booking.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
-/*builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));*/
 builder.Services.AddSingleton<VoucherService>();
 builder.Services.AddSingleton<GenreService>();
 builder.Services.AddSingleton<UserService>();
 builder.Services.AddSingleton<NewsService>();
 builder.Services.AddSingleton<TheatreService>();
+builder.Services.AddSingleton<SeatService>();
 builder.Services.AddSingleton<MovieService>();
 builder.Services.AddSingleton<CloudinaryService>();
+builder.Services.AddSingleton<ScheduleService>();
+builder.Services.AddSingleton<TicketService>();
 
 
 // Add services to the container.
