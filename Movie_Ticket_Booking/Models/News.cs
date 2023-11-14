@@ -14,9 +14,12 @@ namespace Movie_Ticket_Booking.Models
         public string content { get; set; } = null!;
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime createdAt { get; set; }
+        [BsonRepresentation(BsonType.DateTime)]
+        public DateTime updatedAt { get; set; } 
         public News()
         {
             createdAt = DateTime.UtcNow;
+            updatedAt = DateTime.UtcNow;
         }
     }
 }

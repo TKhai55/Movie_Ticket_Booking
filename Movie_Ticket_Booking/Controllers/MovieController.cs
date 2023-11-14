@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Movie_Ticket_Booking.Models;
 using Movie_Ticket_Booking.Service;
 
@@ -18,9 +19,26 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Movie>> Get()
+        public async Task<List<MovieWithGenre>> Get()
         {
             return await _mongoDBService.GetAsync();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<MovieWithGenre>> GetById(string id)
+        {
+            if (string.IsNullOrEmpty(id) || !ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid ID format");
+            }
+
+            var news = await _mongoDBService.GetByIdAsync(id);
+            if (news == null)
+            {
+                return NotFound("Movie not found");
+            }
+
+            return Ok(news);
         }
 
         [HttpPost]
@@ -30,6 +48,24 @@ namespace Movie_Ticket_Booking.Controllers
             return CreatedAtAction(nameof(Get), new { id = movie.Id }, movie);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(string id, [FromBody] Movie updatedMovie)
+        {
+            if (string.IsNullOrEmpty(id) || !ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid ID format");
+            }
+
+            try
+            {
+                await _mongoDBService.UpdateAsync(id, updatedMovie);
+                return Ok("Movie updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
+            }
+        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)

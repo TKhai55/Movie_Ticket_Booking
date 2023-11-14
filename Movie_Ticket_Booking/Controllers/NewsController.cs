@@ -47,6 +47,25 @@ namespace Movie_Ticket_Booking.Controllers
             return CreatedAtAction(nameof(Get), new { id = news.Id }, news);
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(string id, [FromBody] News updatedNews)
+        {
+            if (string.IsNullOrEmpty(id) || !ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid ID format");
+            }
+
+            try
+            {
+                await _mongoDBService.UpdateAsync(id, updatedNews);
+                return Ok("News updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
+            }
+        }
+
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)

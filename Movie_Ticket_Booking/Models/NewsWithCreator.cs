@@ -13,6 +13,8 @@ namespace Movie_Ticket_Booking.Models
         public string content { get; set; } = null!;
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime createdAt { get; set; }
-        public User creatorInfo { get; set; }
+        [BsonRepresentation(BsonType.DateTime)]
+        public DateTime updatedAt { get; set; }
+        public User creator { get; set; }
     }
 }

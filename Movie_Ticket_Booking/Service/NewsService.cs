@@ -25,10 +25,10 @@ namespace Movie_Ticket_Booking.Service
                          { "from", "account" },
                          { "localField", "creator" },
                          { "foreignField", "_id" },
-                         { "as", "creatorInfo" }
+                         { "as", "creator" }
                      }
                   ),
-                 new BsonDocument("$unwind", "$creatorInfo"),
+                 new BsonDocument("$unwind", "$creator"),
                  new BsonDocument("$project",
                      new BsonDocument
                      {
@@ -36,11 +36,17 @@ namespace Movie_Ticket_Booking.Service
                          { "title", 1 },
                          { "content", 1 },
                          { "createdAt", 1 },
-                         { "creatorInfo._id", 1 },
-                         { "creatorInfo.account", 1 },
-                         { "creatorInfo.password", 1 },
+                         { "updatedAt", 1 },
+                         { "creator._id", 1 },
+                         { "creator.account", 1 },
                      }),
-                };
+                     new BsonDocument("$sort",
+                        new BsonDocument
+                        {
+                            { "updatedAt", -1 }
+                        }
+                    ),
+             };
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _newsCollection.Aggregate<NewsWithCreator>(pipeline, options).ToListAsync();
@@ -64,10 +70,10 @@ namespace Movie_Ticket_Booking.Service
                          { "from", "account" },
                          { "localField", "creator" },
                          { "foreignField", "_id" },
-                         { "as", "creatorInfo" }
+                         { "as", "creator" }
                      }
                   ),
-                 new BsonDocument("$unwind", "$creatorInfo"),
+                 new BsonDocument("$unwind", "$creator"),
                  new BsonDocument("$project",
                      new BsonDocument
                      {
@@ -75,9 +81,9 @@ namespace Movie_Ticket_Booking.Service
                          { "title", 1 },
                          { "content", 1 },
                          { "createdAt", 1 },
-                         { "creatorInfo._id", 1 },
-                         { "creatorInfo.account", 1 },
-                         { "creatorInfo.password", 1 },
+                         { "updatedAt", 1 },
+                         { "creator._id", 1 },
+                         { "creator.account", 1 },
                      }),
                 };
 
@@ -90,6 +96,37 @@ namespace Movie_Ticket_Booking.Service
         {
             await _newsCollection.InsertOneAsync(news);
             return;
+        }
+
+        public async Task UpdateAsync(string id, News updatedNews)
+        {
+            var filter = Builders<News>.Filter.Eq("_id", new ObjectId(id)); // Lọc dựa trên ID
+            var update = Builders<News>.Update
+                .Set("updatedAt", DateTime.UtcNow); // Tự động cập nhật trường updatedAt
+
+            if (updatedNews != null)
+            {
+                // Cập nhật trường title nếu có giá trị
+                if (!string.IsNullOrEmpty(updatedNews.title))
+                {
+                    update = update.Set("title", updatedNews.title);
+                }
+
+                // Cập nhật trường content nếu có giá trị
+                if (!string.IsNullOrEmpty(updatedNews.content))
+                {
+                    update = update.Set("content", updatedNews.content);
+                }
+            }
+
+            // Thực hiện cập nhật
+            var result = await _newsCollection.UpdateOneAsync(filter, update);
+
+            if (result.ModifiedCount == 0)
+            {
+                // Không tìm thấy tài liệu cần cập nhật
+                throw new Exception("News not found");
+            }
         }
 
         public async Task DeleteAsync(string id)

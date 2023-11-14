@@ -3,7 +3,7 @@ using MongoDB.Bson;
 
 namespace Movie_Ticket_Booking.Models
 {
-    public class Movie
+    public class MovieWithGenre
     {
         [BsonId, BsonElement("_id"), BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
@@ -12,8 +12,7 @@ namespace Movie_Ticket_Booking.Models
         public string studio { get; set; } = null!;
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime publishDate { get; set; }
-        [BsonRepresentation(BsonType.ObjectId)]
-        public List<string> genre { get; set; } = null!;
+        public List<Genre> genre { get; set; } = null!;
         public string type { get; set; } = null!;
         public string actors { get; set; } = null!;
         public string director { get; set; } = null!;
