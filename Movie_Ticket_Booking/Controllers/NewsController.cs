@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Movie_Ticket_Booking.Models;
 using Movie_Ticket_Booking.Service;
 
@@ -17,9 +18,26 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet]
-        public async Task<List<News>> Get()
+        public async Task<List<NewsWithCreator>> Get()
         {
             return await _mongoDBService.GetAsync();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<NewsWithCreator>> GetById(string id)
+        {
+            if (string.IsNullOrEmpty(id) || !ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid ID format");
+            }
+
+            var news = await _mongoDBService.GetByIdAsync(id);
+            if (news == null)
+            {
+                return NotFound("News not found");
+            }
+
+            return Ok(news);
         }
 
         [HttpPost]
