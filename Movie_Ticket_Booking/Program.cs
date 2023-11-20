@@ -1,6 +1,7 @@
-using CloudinaryDotNet;
+using Microsoft.IdentityModel.Tokens;
 using Movie_Ticket_Booking.Models;
 using Movie_Ticket_Booking.Service;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,24 @@ builder.Services.AddSingleton<MovieService>();
 builder.Services.AddSingleton<CloudinaryService>();
 builder.Services.AddSingleton<ScheduleService>();
 builder.Services.AddSingleton<TicketService>();
+// Configure JWT authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = "JwtBearer";
+    options.DefaultChallengeScheme = "JwtBearer";
+})
+.AddJwtBearer("JwtBearer", jwtBearerOptions =>
+{
+    jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("JWTAuthenticationHIGHsecuredPasswordVVVp1OH7Xzyr")),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromDays(365),
+    };
+});
 
 
 // Add services to the container.
@@ -23,6 +42,7 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 var app = builder.Build();
 
@@ -35,8 +55,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();

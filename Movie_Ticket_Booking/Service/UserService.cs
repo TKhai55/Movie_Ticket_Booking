@@ -16,6 +16,11 @@ namespace Movie_Ticket_Booking.Service
             _accountCollection = database.GetCollection<User>("account");
         }
 
+        public async Task<User> AuthenticateAsync(string account, string password)
+        {
+            var user = await _accountCollection.Find(u => u.account == account && u.password == password).FirstOrDefaultAsync();
+            return user;
+        }
         public async Task<List<User>> GetAsync()
         {
             return await _accountCollection.Find(new BsonDocument()).ToListAsync();

@@ -1,7 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using Movie_Ticket_Booking.Models;
 using Movie_Ticket_Booking.Service;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace Movie_Ticket_Booking.Controllers
 {
@@ -17,12 +22,41 @@ namespace Movie_Ticket_Booking.Controllers
             _mongoDBService = mongoDBService;
         }
 
+        [AllowAnonymous]
+        [HttpPost("authenticate")]
+        public async Task<IActionResult> Authenticate([FromBody] User loginModel)
+        {
+            var user = await _mongoDBService.AuthenticateAsync(loginModel.account, loginModel.password);
+
+            if (user == null)
+                return BadRequest(new { Message = "Invalid username or password" });
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.UTF8.GetBytes("JWTAuthenticationHIGHsecuredPasswordVVVp1OH7Xzyr"); // Same key as in Startup.cs
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+            new Claim(ClaimTypes.Name, user.Id),
+                    // Add additional claims as needed
+                }),
+                Expires = DateTime.UtcNow.AddHours(1), // Token expiration time
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenString = tokenHandler.WriteToken(token);
+
+            return Ok(new { Token = tokenString });
+        }
+
+        [Authorize]
         [HttpGet]
         public async Task<List<User>> Get()
         {
             return await _mongoDBService.GetAsync();
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] User account)
         {
@@ -38,6 +72,7 @@ namespace Movie_Ticket_Booking.Controllers
             }
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetById(string id)
         {
@@ -54,6 +89,8 @@ namespace Movie_Ticket_Booking.Controllers
 
             return Ok(user);
         }
+
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(string id, [FromBody] User updatedUser)
         {
@@ -72,6 +109,8 @@ namespace Movie_Ticket_Booking.Controllers
                 return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
             }
         }
+
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {

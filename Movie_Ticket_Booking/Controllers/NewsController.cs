@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
 using Movie_Ticket_Booking.Models;
 using Movie_Ticket_Booking.Service;
@@ -40,6 +41,7 @@ namespace Movie_Ticket_Booking.Controllers
             return Ok(news);
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] News news)
         {
@@ -47,6 +49,7 @@ namespace Movie_Ticket_Booking.Controllers
             return CreatedAtAction(nameof(Get), new { id = news.Id }, news);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(string id, [FromBody] News updatedNews)
         {
@@ -66,7 +69,7 @@ namespace Movie_Ticket_Booking.Controllers
             }
         }
 
-
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
