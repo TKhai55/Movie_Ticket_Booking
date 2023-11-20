@@ -69,6 +69,27 @@ namespace Movie_Ticket_Booking.Controllers
                 return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
             }
         }
+        [HttpGet("searchBasic")]
+        public async Task<ActionResult<List<MovieWithGenre>>> Search(
+            [FromQuery(Name = "query")] string query)
+        {
+            var result = await _mongoDBService.SearchAsync(query);
+            return Ok(result);
+        }
+        [HttpGet("searchByGenre")]
+        public async Task<ActionResult<List<MovieWithGenre>>> SearchByGenre(
+    [FromQuery(Name = "genreId")] string genreId)
+        {
+            if (!ObjectId.TryParse(genreId, out ObjectId objectId))
+            {
+                // Handle invalid ObjectId
+                return BadRequest("Invalid genreId format");
+            }
+
+            var result = await _mongoDBService.SearchByGenreAsync(objectId);
+            return Ok(result);
+        }
+
 
         [Authorize]
         [HttpDelete("{id}")]

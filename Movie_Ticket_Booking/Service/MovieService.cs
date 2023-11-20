@@ -162,6 +162,86 @@ namespace Movie_Ticket_Booking.Service
 
         }
 
+        public async Task<List<MovieWithGenre>> SearchAsync(string query)
+        {
+            var pipeline = new BsonDocument[]
+            {
+                // ... existing pipeline stages ...
+
+                new BsonDocument("$match", new BsonDocument("$or", new BsonArray
+                {
+                    new BsonDocument("name", new BsonRegularExpression(query, "i")),
+                    new BsonDocument("studio", new BsonRegularExpression(query, "i"))
+                })),
+                new BsonDocument("$project", new BsonDocument
+                {
+                    { "_id", 1 }, 
+                    { "name", 1 },
+                    { "studio", 1 },
+                    { "publishDate", 1 },
+                    { "genre._id", 1 },
+                    { "genre.name", 1 },
+                    { "type", 1 },
+                    { "actors", 1 },
+                    { "director", 1 },
+                    { "description", 1 },
+                    { "image", 1 },
+                    { "trailer", 1 },
+                    { "duration", 1 },
+                    { "profit", 1 },
+                })
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _movieCollection.Aggregate<MovieWithGenre>(pipeline, options).ToListAsync();
+            return result;
+        }
+
+        public async Task<List<MovieWithGenre>> SearchByGenreAsync(ObjectId genreId)
+        {
+            var pipeline = new BsonDocument[]
+            {
+        // ... existing pipeline stages ...
+
+        new BsonDocument("$match", new BsonDocument
+        {
+            { "genre", new BsonDocument("$in", new BsonArray { genreId }) }
+        }),
+         new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "genre" },
+                        { "localField", "genre" },
+                        { "foreignField", "_id" },
+                        { "as", "genre" }
+                    }
+                ),
+        new BsonDocument("$project", new BsonDocument
+        {
+            { "_id", 1 },
+            { "name", 1 },
+            { "studio", 1 },
+            { "publishDate", 1 },
+            { "genre._id", 1 },
+            { "genre.name", 1 },
+            { "type", 1 },
+            { "actors", 1 },
+            { "director", 1 },
+            { "description", 1 },
+            { "image", 1 },
+            { "trailer", 1 },
+            { "duration", 1 },
+            { "profit", 1 },
+        })
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _movieCollection.Aggregate<MovieWithGenre>(pipeline, options).ToListAsync();
+            return result;
+        }
+
+
+
 
         public async Task DeleteAsync(string id)
         {
