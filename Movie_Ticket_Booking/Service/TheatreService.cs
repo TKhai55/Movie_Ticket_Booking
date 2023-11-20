@@ -42,6 +42,29 @@ namespace Movie_Ticket_Booking.Service
             return;
         }
 
+        public async Task<Theatre> GetByIdAsync(string id)
+        {
+            var theatre = await _theatreCollection.Find(t => t.Id == id).FirstOrDefaultAsync();
+            return theatre;
+        }
+
+        public async Task UpdateAsync(string id, Theatre updatedTheatre)
+        {
+            var filter = Builders<Theatre>.Filter.Eq(movie => movie.Id, id);
+            var updateBuilder = Builders<Theatre>.Update;
+
+            var updateDefinition = updateBuilder.Set(movie => movie.Id, id);
+
+            if (updatedTheatre.name != null)
+                updateDefinition = updateDefinition.Set(movie => movie.name, updatedTheatre.name);
+
+            if (updatedTheatre.description != null)
+                updateDefinition = updateDefinition.Set(movie => movie.description, updatedTheatre.description);
+
+
+            await _theatreCollection.UpdateOneAsync(filter, updateDefinition);
+        }
+
         public async Task DeleteAsync(string id)
         {
             // Tìm theatre cần xoá

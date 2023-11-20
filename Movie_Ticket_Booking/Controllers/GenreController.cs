@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using Movie_Ticket_Booking.Models;
 using Movie_Ticket_Booking.Service;
 
@@ -29,6 +30,41 @@ namespace Movie_Ticket_Booking.Controllers
             return CreatedAtAction(nameof(Get), new { id = genre.Id }, genre);
         }
 
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Genre>> GetById(string id)
+        {
+            if (string.IsNullOrEmpty(id) || !ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid ID format");
+            }
+
+            var genre = await _mongoDBService.GetByIdAsync(id);
+            if (genre == null)
+            {
+                return NotFound("Genre not found");
+            }
+
+            return Ok(genre);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(string id, [FromBody] Genre updatedGenre)
+        {
+            if (string.IsNullOrEmpty(id) || !ObjectId.TryParse(id, out _))
+            {
+                return BadRequest("Invalid ID format");
+            }
+
+            try
+            {
+                await _mongoDBService.UpdateAsync(id, updatedGenre);
+                return Ok("Genre updated successfully");
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
+            }
+        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)

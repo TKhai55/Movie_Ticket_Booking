@@ -46,7 +46,7 @@ namespace Movie_Ticket_Booking.Service
                         { "image", 1 },
                         { "trailer", 1 },
                         { "duration", 1 },
-                        
+                        { "profit", 1 },
                     }
                 ),
                 new BsonDocument("$sort",
@@ -99,6 +99,7 @@ namespace Movie_Ticket_Booking.Service
                         { "image", 1 },
                         { "trailer", 1 },
                         { "duration", 1 },
+                        { "profit", 1 },
 
                     }
                 )

@@ -22,10 +22,37 @@ namespace Movie_Ticket_Booking.Service
         }
         public async Task CreateAsync(User account)
         {
+            var existingAccount = await _accountCollection.Find(a => a.account == account.account).FirstOrDefaultAsync();
+
+            if (existingAccount != null)
+            {
+                throw new Exception("An account with the same username or email already exists.");
+            }
+
+            // If no existing account found, insert the new account
             await _accountCollection.InsertOneAsync(account);
             return;
         }
 
+        public async Task<User> GetByIdAsync(string id)
+        {
+            var user = await _accountCollection.Find(t => t.Id == id).FirstOrDefaultAsync();
+            return user;
+        }
+
+        public async Task UpdateAsync(string id, User updatedUser)
+        {
+            var filter = Builders<User>.Filter.Eq(user => user.Id, id);
+            var updateBuilder = Builders<User>.Update;
+
+            var updateDefinition = updateBuilder.Set(user => user.Id, id);
+
+            if (updatedUser.password != null)
+                updateDefinition = updateDefinition.Set(movie => movie.password, updatedUser.password);
+
+
+            await _accountCollection.UpdateOneAsync(filter, updateDefinition);
+        }
         public async Task DeleteAsync(string id)
         {
             FilterDefinition<User> filter = Builders<User>.Filter.Eq("Id", id);

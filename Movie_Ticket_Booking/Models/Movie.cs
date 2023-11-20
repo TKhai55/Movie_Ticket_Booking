@@ -21,5 +21,6 @@ namespace Movie_Ticket_Booking.Models
         public string image { get; set; } = null!;
         public string trailer { get; set; } = null!;
         public int duration { get; set; } = 0!;
+        public int profit { get; set; } = 0!;
     }
 }
