@@ -15,7 +15,7 @@ namespace Movie_Ticket_Booking.Service
             _newsCollection = database.GetCollection<News>("news");
         }
 
-        public async Task<List<NewsWithCreator>> GetAsync()
+        public async Task<PagedResult<NewsWithCreator>> GetAsync(int page = 1, int pageSize = 10)
         {
             var pipeline = new BsonDocument[]
                {
@@ -46,11 +46,26 @@ namespace Movie_Ticket_Booking.Service
                             { "updatedAt", -1 }
                         }
                     ),
+              new BsonDocument("$skip", (page - 1) * pageSize),
+                     new BsonDocument("$limit", pageSize),
              };
+
+            var totalSeats = await _newsCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _newsCollection.Aggregate<NewsWithCreator>(pipeline, options).ToListAsync();
-            return result;
+
+            var totalPages = (int)Math.Ceiling((double)totalSeats / pageSize);
+
+            var pagedResult = new PagedResult<NewsWithCreator>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
 
         public async Task<List<NewsWithCreator>> GetByIdAsync(string id)
@@ -129,6 +144,40 @@ namespace Movie_Ticket_Booking.Service
             }
         }
 
+        public async Task<List<NewsWithCreator>> SearchAsync(string query)
+        {
+            var pipeline = new BsonDocument[]
+            {
+                // ... existing pipeline stages ...
+
+                new BsonDocument("$match", new BsonDocument("title", new BsonRegularExpression(query, "i"))
+                ),
+                 new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "account" },
+                        { "localField", "creator" },
+                        { "foreignField", "_id" },
+                        { "as", "creator" }
+                    }
+                ),
+                  new BsonDocument("$unwind", "$creator"),
+                new BsonDocument("$project", new BsonDocument
+                {
+                    { "_id", 1 },
+                    { "title", 1 },
+                    { "content", 1 },
+                    { "createdAt", 1 },
+                    { "updatedAt", 1 },
+                    { "creator._id", 1 },
+                    { "creator.account", 1 },
+                })
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _newsCollection.Aggregate<NewsWithCreator>(pipeline, options).ToListAsync();
+            return result;
+        }
         public async Task DeleteAsync(string id)
         {
             FilterDefinition<News> filter = Builders<News>.Filter.Eq("Id", id);

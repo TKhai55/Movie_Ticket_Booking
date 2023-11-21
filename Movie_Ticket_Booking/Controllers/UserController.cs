@@ -51,9 +51,10 @@ namespace Movie_Ticket_Booking.Controllers
 
         [Authorize]
         [HttpGet]
-        public async Task<List<User>> Get()
+        public async Task<ActionResult<PagedResult<User>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return await _mongoDBService.GetAsync();
+            var pagedVouchers = await _mongoDBService.GetAsync(page, pageSize);
+            return Ok(pagedVouchers);
         }
 
         [Authorize]
@@ -109,13 +110,31 @@ namespace Movie_Ticket_Booking.Controllers
                 return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
             }
         }
+        [HttpGet("search")]
+        public async Task<ActionResult<List<Voucher>>> GetByVoucherDefault([FromQuery] string account)
+        {
+            if (string.IsNullOrEmpty(account))
+            {
+                return BadRequest("Invalid account");
+            }
+
+            var accounts = await _mongoDBService.SearchAsync(account);
+            if (accounts == null || accounts.Count == 0)
+            {
+                return NotFound("User not found");
+            }
+
+            return Ok(accounts);
+        }
+
 
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
             await _mongoDBService.DeleteAsync(id);
-            return NoContent();
+            return Ok("Delete successfully");
+
         }
 
     }

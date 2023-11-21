@@ -20,9 +20,10 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet]
-        public async Task<List<MovieWithGenre>> Get()
+        public async Task<ActionResult<List<MovieWithGenre>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return await _mongoDBService.GetAsync();
+            var seats = await _mongoDBService.GetAsync(page, pageSize);
+            return Ok(seats);
         }
 
         [HttpGet("{id}")]
@@ -96,7 +97,7 @@ namespace Movie_Ticket_Booking.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             await _mongoDBService.DeleteAsync(id);
-            return NoContent();
+            return Ok("Delete successfully");
         }
 
     }

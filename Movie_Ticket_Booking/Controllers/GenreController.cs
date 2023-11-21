@@ -19,9 +19,10 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Genre>> Get()
+        public async Task<ActionResult<List<Genre>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return await _mongoDBService.GetAsync();
+            var seats = await _mongoDBService.GetAsync(page, pageSize);
+            return Ok(seats);
         }
 
         [Authorize]
@@ -68,13 +69,29 @@ namespace Movie_Ticket_Booking.Controllers
                 return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
             }
         }
+        [HttpGet("search")]
+        public async Task<ActionResult<List<Genre>>> SearchGenre([FromQuery] string genre)
+        {
+            if (string.IsNullOrEmpty(genre))
+            {
+                return BadRequest("Invalid account");
+            }
+
+            var result = await _mongoDBService.SearchAsync(genre);
+            if (result == null)
+            {
+                return NotFound("User not found");
+            }
+
+            return Ok(result);
+        }
 
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
             await _mongoDBService.DeleteAsync(id);
-            return NoContent();
+            return Ok("Delete successfully");
         }
 
     }

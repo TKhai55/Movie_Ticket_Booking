@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Movie_Ticket_Booking.Models;
+using System.Text.RegularExpressions;
 
 namespace Movie_Ticket_Booking.Service
 {
@@ -20,7 +21,7 @@ namespace Movie_Ticket_Booking.Service
         {
             return await _scheduleCollection.Find(new BsonDocument()).ToListAsync();
         }*/
-        public async Task<List<ScheduleFullinfo>> GetAsync()
+        public async Task<PagedResult<ScheduleFullinfo>> GetAsync(int page = 1, int pageSize = 10)
         {
             var pipeline = new BsonDocument[]
                     {
@@ -79,12 +80,12 @@ namespace Movie_Ticket_Booking.Service
                     new BsonDocument
                     {
                         { "from", "voucher" },
-                        { "let", new BsonDocument("voucherId", "$bookedSeat.voucher") },
+                        { "let", new BsonDocument("voucherCode", "$bookedSeat.voucher") },
                         { "pipeline", new BsonArray
                             {
                                 new BsonDocument("$match",
                                     new BsonDocument("$expr",
-                                        new BsonDocument("$eq", new BsonArray { "$_id", "$$voucherId" })
+                                        new BsonDocument("$eq", new BsonArray { "$code", "$$voucherCode" })
                                     )
                                 )
                             }
@@ -132,6 +133,7 @@ namespace Movie_Ticket_Booking.Service
                 { "bookedSeat.seat.number", 1 },
                 { "bookedSeat.voucher._id", 1 },
                 { "bookedSeat.voucher.name", 1 },
+                { "bookedSeat.voucher.code", 1 },
                 { "bookedSeat.voucher.description", 1 },
                 { "bookedSeat.voucher.value", 1 },
                 { "bookedSeat.createdAt", 1 },
@@ -158,13 +160,26 @@ namespace Movie_Ticket_Booking.Service
                 { "startTime", 1 }
             }
         ),
+        new BsonDocument("$skip", (page - 1) * pageSize),
+                     new BsonDocument("$limit", pageSize),
             };
+
+            var totalSeats = await _scheduleCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _scheduleCollection.Aggregate<ScheduleFullinfo>(pipeline, options).ToListAsync();
-            return result;
 
+            var totalPages = (int)Math.Ceiling((double)totalSeats / pageSize);
 
+            var pagedResult = new PagedResult<ScheduleFullinfo>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task CreateAsync(Schedule schedule)
         {
@@ -241,12 +256,12 @@ namespace Movie_Ticket_Booking.Service
                     new BsonDocument
                     {
                         { "from", "voucher" },
-                        { "let", new BsonDocument("voucherId", "$bookedSeat.voucher") },
+                        { "let", new BsonDocument("voucherCode", "$bookedSeat.voucher") },
                         { "pipeline", new BsonArray
                             {
                                 new BsonDocument("$match",
                                     new BsonDocument("$expr",
-                                        new BsonDocument("$eq", new BsonArray { "$_id", "$$voucherId" })
+                                        new BsonDocument("$eq", new BsonArray { "$code", "$$voucherCode" })
                                     )
                                 )
                             }
@@ -294,6 +309,7 @@ namespace Movie_Ticket_Booking.Service
                 { "bookedSeat.seat.number", 1 },
                 { "bookedSeat.voucher._id", 1 },
                 { "bookedSeat.voucher.name", 1 },
+                { "bookedSeat.voucher.code", 1 },
                 { "bookedSeat.voucher.description", 1 },
                 { "bookedSeat.voucher.value", 1 },
                 { "bookedSeat.createdAt", 1 },
@@ -324,7 +340,6 @@ namespace Movie_Ticket_Booking.Service
 
 
         }
-
         public async Task<(bool success, string errorMessage)> UpdateAsync(string id, Schedule updatedSchedule)
         {
             var filter = Builders<Schedule>.Filter.Eq(schedule => schedule.Id, id);
@@ -369,6 +384,8 @@ namespace Movie_Ticket_Booking.Service
                 return (false, "Cannot update schedule with booked seats.");
             }
         }
+
+
 
         public async Task DeleteAsync(string id)
         {

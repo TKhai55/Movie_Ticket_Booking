@@ -18,9 +18,28 @@ namespace Movie_Ticket_Booking.Service
             _seatCollection = database.GetCollection<Seat>("seat");
         }
 
-        public async Task<List<Theatre>> GetAsync()
+        public async Task<PagedResult<Theatre>> GetAsync(int page = 1, int pageSize = 10)
         {
-            return await _theatreCollection.Find(new BsonDocument()).ToListAsync();
+            var totalVouchers = await _theatreCollection.CountDocumentsAsync(new BsonDocument());
+
+            var pipeline = new BsonDocument[]
+            {
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _theatreCollection.Aggregate<Theatre>(pipeline, options).ToListAsync();
+
+            var totalPages = (int)Math.Ceiling((double)totalVouchers / pageSize);
+
+            var pagedResult = new PagedResult<Theatre>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task CreateAsync(Theatre theatre)
         {

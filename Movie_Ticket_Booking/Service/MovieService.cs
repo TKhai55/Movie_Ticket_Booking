@@ -17,7 +17,7 @@ namespace Movie_Ticket_Booking.Service
             _movieCollection = database.GetCollection<Movie>("movie");
         }
 
-        public async Task<List<MovieWithGenre>> GetAsync()
+        public async Task<PagedResult<MovieWithGenre>> GetAsync(int page = 1, int pageSize = 10)
         {
             var pipeline = new BsonDocument[]
             {
@@ -55,12 +55,26 @@ namespace Movie_Ticket_Booking.Service
                             { "publishDate", 1 }
                         }
                     ),
-            };
+            new BsonDocument("$skip", (page - 1) * pageSize),
+                     new BsonDocument("$limit", pageSize),
+             };
 
+            var totalSeats = await _movieCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _movieCollection.Aggregate<MovieWithGenre>(pipeline, options).ToListAsync();
-            return result;
+
+            var totalPages = (int)Math.Ceiling((double)totalSeats / pageSize);
+
+            var pagedResult = new PagedResult<MovieWithGenre>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
 
         public async Task<List<MovieWithGenre>> GetByIdAsync(string id)

@@ -20,7 +20,7 @@ namespace Movie_Ticket_Booking.Service
             _scheduleCollection = database.GetCollection<Schedule>("schedule");
         }
 
-        public async Task<List<TicketInformation>> GetAsync()
+        public async Task<PagedResult<TicketInformation>> GetAsync(int page = 1, int pageSize = 10)
         {
             var pipeline = new BsonDocument[]
             {
@@ -38,12 +38,12 @@ namespace Movie_Ticket_Booking.Service
                     new BsonDocument
                     {
                         { "from", "voucher" },
-                        { "let", new BsonDocument("voucherId", "$voucher") },
+                        { "let", new BsonDocument("voucherCode", "$voucher") },
                         { "pipeline", new BsonArray
                             {
                                 new BsonDocument("$match",
                                     new BsonDocument("$expr",
-                                        new BsonDocument("$eq", new BsonArray { "$_id", "$$voucherId" })
+                                        new BsonDocument("$eq", new BsonArray { "$code", "$$voucherCode" })
                                     )
                                 )
                             }
@@ -64,6 +64,7 @@ namespace Movie_Ticket_Booking.Service
                         { "schedule", 1 },
                         { "voucher._id", 1 },
                         { "voucher.name", 1 },
+                        { "voucher.code", 1 },
                         { "voucher.value", 1 },
                         { "voucher.description", 1 },
                         { "seat._id", 1 },
@@ -81,11 +82,26 @@ namespace Movie_Ticket_Booking.Service
                         { "updatedAt", -1 }
                     }
                 ),
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                new BsonDocument("$limit", pageSize),
             };
+
+            var totalVouchers = await _ticketCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _ticketCollection.Aggregate<TicketInformation>(pipeline, options).ToListAsync();
-            return result;
+
+            var totalPages = (int)Math.Ceiling((double)totalVouchers / pageSize);
+
+            var pagedResult = new PagedResult<TicketInformation>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task CreateAsync(Ticket ticket)
         {
@@ -188,6 +204,7 @@ namespace Movie_Ticket_Booking.Service
                          { "schedule", 1 },
                          { "voucher._id", 1 },
                          { "voucher.name", 1 },
+                         { "voucher.code", 1 },
                          { "voucher.value", 1 },
                          { "voucher.description", 1 },
 

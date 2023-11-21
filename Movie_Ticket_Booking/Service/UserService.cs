@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Movie_Ticket_Booking.Models;
+using System.Text.RegularExpressions;
 
 namespace Movie_Ticket_Booking.Service
 {
@@ -21,9 +22,28 @@ namespace Movie_Ticket_Booking.Service
             var user = await _accountCollection.Find(u => u.account == account && u.password == password).FirstOrDefaultAsync();
             return user;
         }
-        public async Task<List<User>> GetAsync()
+        public async Task<PagedResult<User>> GetAsync(int page = 1, int pageSize = 10)
         {
-            return await _accountCollection.Find(new BsonDocument()).ToListAsync();
+            var totalVouchers = await _accountCollection.CountDocumentsAsync(new BsonDocument());
+
+            var pipeline = new BsonDocument[]
+            {
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _accountCollection.Aggregate<User>(pipeline, options).ToListAsync();
+
+            var totalPages = (int)Math.Ceiling((double)totalVouchers / pageSize);
+
+            var pagedResult = new PagedResult<User>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task CreateAsync(User account)
         {
@@ -45,6 +65,8 @@ namespace Movie_Ticket_Booking.Service
             return user;
         }
 
+
+
         public async Task UpdateAsync(string id, User updatedUser)
         {
             var filter = Builders<User>.Filter.Eq(user => user.Id, id);
@@ -57,6 +79,13 @@ namespace Movie_Ticket_Booking.Service
 
 
             await _accountCollection.UpdateOneAsync(filter, updateDefinition);
+        }
+
+        public async Task<List<User>> SearchAsync(string account)
+        {
+            var filter = Builders<User>.Filter.Regex(t => t.account, new BsonRegularExpression(new Regex(account, RegexOptions.IgnoreCase)));
+            var accounts = await _accountCollection.Find(filter).ToListAsync();
+            return accounts;
         }
         public async Task DeleteAsync(string id)
         {

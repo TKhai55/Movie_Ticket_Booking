@@ -19,17 +19,27 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet]
-        public async Task<List<Voucher>> Get()
+        public async Task<ActionResult<PagedResult<Voucher>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return await _mongoDBService.GetAsync();
+            var pagedVouchers = await _mongoDBService.GetAsync(page, pageSize);
+            return Ok(pagedVouchers);
         }
 
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Voucher voucher)
         {
+            try
+            {
+
             await _mongoDBService.CreateAsync(voucher);
             return CreatedAtAction(nameof(Get), new { id = voucher.Id }, voucher);
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception, for example, log it or return an error response
+                return BadRequest(new { Message = ex.Message });
+            }
         }
         [HttpGet("{id}")]
         public async Task<ActionResult<Voucher>> GetById(string id)
@@ -42,10 +52,44 @@ namespace Movie_Ticket_Booking.Controllers
             var voucher = await _mongoDBService.GetByIdAsync(id);
             if (voucher == null)
             {
-                return NotFound("News not found");
+                return NotFound("Voucher not found");
             }
 
             return Ok(voucher);
+        }
+
+        [HttpGet("searchByCodeCustomer")]
+        public async Task<ActionResult<Voucher>> GetByVoucher([FromQuery] string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return BadRequest("Invalid code");
+            }
+
+            var voucher = await _mongoDBService.GetByVoucherCustomerAsync(code);
+            if (voucher == null)
+            {
+                return NotFound("Voucher not found");
+            }
+
+            return Ok(voucher);
+        }
+
+        [HttpGet("searchBasic")]
+        public async Task<ActionResult<List<Voucher>>> GetByVoucherDefault([FromQuery] string code)
+        {
+            if (string.IsNullOrEmpty(code))
+            {
+                return BadRequest("Invalid code");
+            }
+
+            var vouchers = await _mongoDBService.GetByVoucherBasicAsync(code);
+            if (vouchers == null || vouchers.Count == 0)
+            {
+                return NotFound("Voucher not found");
+            }
+
+            return Ok(vouchers);
         }
 
         [Authorize]
@@ -73,7 +117,7 @@ namespace Movie_Ticket_Booking.Controllers
         public async Task<IActionResult> Delete(string id)
         {
             await _mongoDBService.DeleteAsync(id);
-            return NoContent();
+            return Ok("Delete successfully");
         }
 
     }

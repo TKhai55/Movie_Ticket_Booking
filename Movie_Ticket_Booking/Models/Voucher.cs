@@ -10,6 +10,8 @@ namespace Movie_Ticket_Booking.Models
 
         public string name { get; set; } = null!;
 
+        public string code { get; set; } = null!;
+
         public string description { get; set; } = null!;
         public int value { get; set; } = 0!;
     }

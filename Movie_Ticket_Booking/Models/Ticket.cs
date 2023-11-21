@@ -11,7 +11,6 @@ namespace Movie_Ticket_Booking.Models
         public string schedule { get; set; } = null!;
         [BsonRepresentation(BsonType.ObjectId)]
         public string seat { get; set; } = null!;
-        [BsonRepresentation(BsonType.ObjectId)]
         public string voucher { get; set; } = null!;
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime createdAt { get; set; }

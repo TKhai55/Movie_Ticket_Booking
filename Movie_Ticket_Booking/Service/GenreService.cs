@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Movie_Ticket_Booking.Models;
+using System.Text.RegularExpressions;
 
 namespace Movie_Ticket_Booking.Service
 {
@@ -16,9 +17,28 @@ namespace Movie_Ticket_Booking.Service
             _genreCollection = database.GetCollection<Genre>("genre");
         }
 
-        public async Task<List<Genre>> GetAsync()
+        public async Task<PagedResult<Genre>> GetAsync(int page = 1, int pageSize = 10)
         {
-            return await _genreCollection.Find(new BsonDocument()).ToListAsync();
+            var totalVouchers = await _genreCollection.CountDocumentsAsync(new BsonDocument());
+
+            var pipeline = new BsonDocument[]
+            {
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _genreCollection.Aggregate<Genre>(pipeline, options).ToListAsync();
+
+            var totalPages = (int)Math.Ceiling((double)totalVouchers / pageSize);
+
+            var pagedResult = new PagedResult<Genre>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task CreateAsync(Genre genre)
         {
@@ -57,6 +77,13 @@ namespace Movie_Ticket_Booking.Service
             
             await _genreCollection.UpdateOneAsync(filter, updateDefinition);
 
+        }
+
+        public async Task<List<Genre>> SearchAsync(string genre)
+        {
+            var filter = Builders<Genre>.Filter.Regex(t => t.name, new BsonRegularExpression(new Regex(genre, RegexOptions.IgnoreCase)));
+            var accounts = await _genreCollection.Find(filter).ToListAsync();
+            return accounts;
         }
         public async Task DeleteAsync(string id)
         {

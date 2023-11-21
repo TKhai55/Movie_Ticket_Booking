@@ -19,9 +19,10 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet]
-        public async Task<List<NewsWithCreator>> Get()
+        public async Task<ActionResult<List<NewsWithCreator>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            return await _mongoDBService.GetAsync();
+            var seats = await _mongoDBService.GetAsync(page, pageSize);
+            return Ok(seats);
         }
 
         [HttpGet("{id}")]
@@ -69,12 +70,21 @@ namespace Movie_Ticket_Booking.Controllers
             }
         }
 
+        [HttpGet("search")]
+        public async Task<ActionResult<List<NewsWithCreator>>> Search(
+            [FromQuery(Name = "query")] string query)
+        {
+            var result = await _mongoDBService.SearchAsync(query);
+            return Ok(result);
+        }
+
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
             await _mongoDBService.DeleteAsync(id);
-            return NoContent();
+            return Ok("Delete successfully");
+
         }
 
     }

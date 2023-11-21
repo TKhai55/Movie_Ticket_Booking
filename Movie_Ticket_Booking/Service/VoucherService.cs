@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Movie_Ticket_Booking.Models;
+using System.Text.RegularExpressions;
 
 namespace Movie_Ticket_Booking.Service
 {
@@ -16,13 +17,45 @@ namespace Movie_Ticket_Booking.Service
             _voucherCollection = database.GetCollection<Voucher>("voucher");
         }
 
-        public async Task<List<Voucher>> GetAsync()
+        public async Task<PagedResult<Voucher>> GetAsync(int page = 1, int pageSize = 10)
         {
-            return await _voucherCollection.Find(new BsonDocument()).ToListAsync();
+            var totalVouchers = await _voucherCollection.CountDocumentsAsync(new BsonDocument());
+
+            var pipeline = new BsonDocument[]
+            {
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _voucherCollection.Aggregate<Voucher>(pipeline, options).ToListAsync();
+
+            var totalPages = (int)Math.Ceiling((double)totalVouchers / pageSize);
+
+            var pagedResult = new PagedResult<Voucher>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
+        public async Task<bool> IsCodeUniqueAsync(string code)
+        {
+            var existingVoucher = await _voucherCollection.Find(x => x.code == code).FirstOrDefaultAsync();
+            return existingVoucher == null;
+        }
+
         public async Task CreateAsync(Voucher voucher)
         {
-            await _voucherCollection.InsertOneAsync(voucher);
+            if (await IsCodeUniqueAsync(voucher.code))
+            {
+                await _voucherCollection.InsertOneAsync(voucher);
+            }
+            else
+            {
+                throw new Exception("An voucher with the same code already exists.");
+            }
             return;
         }
 
@@ -32,6 +65,19 @@ namespace Movie_Ticket_Booking.Service
             return voucher;
         }
 
+        public async Task<Voucher> GetByVoucherCustomerAsync(string code)
+        {
+            var filter = Builders<Voucher>.Filter.Eq(t => t.code, code);
+            var voucher = await _voucherCollection.Find(filter).FirstOrDefaultAsync();
+            return voucher;
+        }
+
+        public async Task<List<Voucher>> GetByVoucherBasicAsync(string code)
+        {
+            var filter = Builders<Voucher>.Filter.Regex(t => t.code, new BsonRegularExpression(new Regex(code, RegexOptions.IgnoreCase)));
+            var vouchers = await _voucherCollection.Find(filter).ToListAsync();
+            return vouchers;
+        }
         public async Task UpdateAsync(string id, Voucher updatedVoucher)
         {
             var filter = Builders<Voucher>.Filter.Eq(voucher => voucher.Id, id);
