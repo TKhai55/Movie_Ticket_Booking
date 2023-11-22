@@ -72,12 +72,32 @@ namespace Movie_Ticket_Booking.Service
             return voucher;
         }
 
-        public async Task<List<Voucher>> GetByVoucherBasicAsync(string code)
+        public async Task<PagedResult<Voucher>> GetByVoucherBasicAsync(string code, int page = 1, int pageSize = 10)
         {
-            var filter = Builders<Voucher>.Filter.Regex(t => t.code, new BsonRegularExpression(new Regex(code, RegexOptions.IgnoreCase)));
-            var vouchers = await _voucherCollection.Find(filter).ToListAsync();
-            return vouchers;
+            var pipeline = new BsonDocument[]
+            {
+                new BsonDocument("$match", new BsonDocument("code", new BsonRegularExpression(new Regex(code, RegexOptions.IgnoreCase)))),
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                new BsonDocument("$limit", pageSize),
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _voucherCollection.Aggregate<Voucher>(pipeline, options).ToListAsync();
+
+            var totalItems = await _voucherCollection.CountDocumentsAsync(new BsonDocument("code", new BsonRegularExpression(new Regex(code, RegexOptions.IgnoreCase))));
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var pagedResult = new PagedResult<Voucher>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
+
         public async Task UpdateAsync(string id, Voucher updatedVoucher)
         {
             var filter = Builders<Voucher>.Filter.Eq(voucher => voucher.Id, id);

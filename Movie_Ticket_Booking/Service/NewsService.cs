@@ -144,7 +144,7 @@ namespace Movie_Ticket_Booking.Service
             }
         }
 
-        public async Task<List<NewsWithCreator>> SearchAsync(string query)
+        public async Task<PagedResult<NewsWithCreator>> SearchAsync(string query, int page = 1, int pageSize = 10)
         {
             var pipeline = new BsonDocument[]
             {
@@ -171,12 +171,27 @@ namespace Movie_Ticket_Booking.Service
                     { "updatedAt", 1 },
                     { "creator._id", 1 },
                     { "creator.account", 1 },
-                })
+                }),
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                new BsonDocument("$limit", pageSize),
             };
+
+            var totalSeats = await _newsCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _newsCollection.Aggregate<NewsWithCreator>(pipeline, options).ToListAsync();
-            return result;
+
+            var totalPages = (int)Math.Ceiling((double)totalSeats / pageSize);
+
+            var pagedResult = new PagedResult<NewsWithCreator>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task DeleteAsync(string id)
         {

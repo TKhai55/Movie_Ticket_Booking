@@ -76,22 +76,30 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet("searchBasic")]
-        public async Task<ActionResult<List<Voucher>>> GetByVoucherDefault([FromQuery] string code)
+        public async Task<ActionResult<PagedResult<Voucher>>> GetByVoucherDefault([FromQuery] string code, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            if (string.IsNullOrEmpty(code))
+            try
             {
-                return BadRequest("Invalid code");
-            }
+                if (string.IsNullOrEmpty(code))
+                {
+                    return BadRequest("Invalid code");
+                }
 
-            var vouchers = await _mongoDBService.GetByVoucherBasicAsync(code);
-            if (vouchers == null || vouchers.Count == 0)
+                var pagedResult = await _mongoDBService.GetByVoucherBasicAsync(code, page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("Voucher not found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
             {
-                return NotFound("Voucher not found");
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
             }
-
-            return Ok(vouchers);
         }
-
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(string id, [FromBody] Voucher updatedVoucher)

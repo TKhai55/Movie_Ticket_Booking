@@ -111,20 +111,29 @@ namespace Movie_Ticket_Booking.Controllers
             }
         }
         [HttpGet("search")]
-        public async Task<ActionResult<List<Voucher>>> GetByVoucherDefault([FromQuery] string account)
+        public async Task<ActionResult<PagedResult<User>>> SearchUser([FromQuery] string account, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            if (string.IsNullOrEmpty(account))
+            try
             {
-                return BadRequest("Invalid account");
-            }
+                if (string.IsNullOrEmpty(account))
+                {
+                    return BadRequest("Invalid account");
+                }
 
-            var accounts = await _mongoDBService.SearchAsync(account);
-            if (accounts == null || accounts.Count == 0)
+                var pagedResult = await _mongoDBService.SearchAsync(account, page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("User not found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
             {
-                return NotFound("User not found");
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
             }
-
-            return Ok(accounts);
         }
 
 

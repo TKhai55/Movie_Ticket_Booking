@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using CloudinaryDotNet;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Movie_Ticket_Booking.Models;
@@ -81,11 +82,30 @@ namespace Movie_Ticket_Booking.Service
             await _accountCollection.UpdateOneAsync(filter, updateDefinition);
         }
 
-        public async Task<List<User>> SearchAsync(string account)
+        public async Task<PagedResult<User>> SearchAsync(string account, int page = 1, int pageSize = 10)
         {
-            var filter = Builders<User>.Filter.Regex(t => t.account, new BsonRegularExpression(new Regex(account, RegexOptions.IgnoreCase)));
-            var accounts = await _accountCollection.Find(filter).ToListAsync();
-            return accounts;
+            var pipeline = new BsonDocument[]
+            {
+                new BsonDocument("$match", new BsonDocument("account", new BsonRegularExpression(new Regex(account, RegexOptions.IgnoreCase)))),
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                new BsonDocument("$limit", pageSize),
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _accountCollection.Aggregate<User>(pipeline, options).ToListAsync();
+
+            var totalItems = await _accountCollection.CountDocumentsAsync(new BsonDocument("account", new BsonRegularExpression(new Regex(account, RegexOptions.IgnoreCase))));
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var pagedResult = new PagedResult<User>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task DeleteAsync(string id)
         {

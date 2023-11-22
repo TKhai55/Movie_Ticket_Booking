@@ -79,11 +79,30 @@ namespace Movie_Ticket_Booking.Service
 
         }
 
-        public async Task<List<Genre>> SearchAsync(string genre)
+        public async Task<PagedResult<Genre>> SearchAsync(string name, int page = 1, int pageSize = 10)
         {
-            var filter = Builders<Genre>.Filter.Regex(t => t.name, new BsonRegularExpression(new Regex(genre, RegexOptions.IgnoreCase)));
-            var accounts = await _genreCollection.Find(filter).ToListAsync();
-            return accounts;
+            var pipeline = new BsonDocument[]
+            {
+                new BsonDocument("$match", new BsonDocument("name", new BsonRegularExpression(new Regex(name, RegexOptions.IgnoreCase)))),
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                new BsonDocument("$limit", pageSize),
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _genreCollection.Aggregate<Genre>(pipeline, options).ToListAsync();
+
+            var totalItems = await _genreCollection.CountDocumentsAsync(new BsonDocument("name", new BsonRegularExpression(new Regex(name, RegexOptions.IgnoreCase))));
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var pagedResult = new PagedResult<Genre>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
         }
         public async Task DeleteAsync(string id)
         {

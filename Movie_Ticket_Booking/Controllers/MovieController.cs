@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using MongoDB.Bson;
 using Movie_Ticket_Booking.Models;
 using Movie_Ticket_Booking.Service;
@@ -71,15 +72,33 @@ namespace Movie_Ticket_Booking.Controllers
             }
         }
         [HttpGet("searchBasic")]
-        public async Task<ActionResult<List<MovieWithGenre>>> Search(
-            [FromQuery(Name = "query")] string query)
+        public async Task<ActionResult<PagedResult<MovieWithGenre>>> Search([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var result = await _mongoDBService.SearchAsync(query);
-            return Ok(result);
+            try
+            {
+                if (string.IsNullOrEmpty(query))
+                {
+                    return BadRequest("Invalid format");
+                }
+
+                var pagedResult = await _mongoDBService.SearchAsync(query, page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("Movie not found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
+            }
         }
         [HttpGet("searchByGenre")]
-        public async Task<ActionResult<List<MovieWithGenre>>> SearchByGenre(
-    [FromQuery(Name = "genreId")] string genreId)
+        public async Task<ActionResult<PagedResult<MovieWithGenre>>> SearchByGenre(
+    [FromQuery(Name = "genreId")] string genreId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             if (!ObjectId.TryParse(genreId, out ObjectId objectId))
             {
@@ -87,8 +106,13 @@ namespace Movie_Ticket_Booking.Controllers
                 return BadRequest("Invalid genreId format");
             }
 
-            var result = await _mongoDBService.SearchByGenreAsync(objectId);
-            return Ok(result);
+            var pagedResult = await _mongoDBService.SearchByGenreAsync(objectId, page, pageSize);
+            if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+            {
+                return NotFound("Movie not found");
+            }
+
+            return Ok(pagedResult);
         }
 
 

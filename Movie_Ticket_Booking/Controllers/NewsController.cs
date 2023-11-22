@@ -71,11 +71,29 @@ namespace Movie_Ticket_Booking.Controllers
         }
 
         [HttpGet("search")]
-        public async Task<ActionResult<List<NewsWithCreator>>> Search(
-            [FromQuery(Name = "query")] string query)
+        public async Task<ActionResult<PagedResult<Voucher>>> SearchAsync([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var result = await _mongoDBService.SearchAsync(query);
-            return Ok(result);
+            try
+            {
+                if (string.IsNullOrEmpty(query))
+                {
+                    return BadRequest("Invalid title");
+                }
+
+                var pagedResult = await _mongoDBService.SearchAsync(query, page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("News not found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [Authorize]

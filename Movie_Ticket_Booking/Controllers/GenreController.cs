@@ -69,21 +69,30 @@ namespace Movie_Ticket_Booking.Controllers
                 return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
             }
         }
-        [HttpGet("search")]
-        public async Task<ActionResult<List<Genre>>> SearchGenre([FromQuery] string genre)
+        [HttpGet("searchBasic")]
+        public async Task<ActionResult<PagedResult<Genre>>> GetByVoucherDefault([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            if (string.IsNullOrEmpty(genre))
+            try
             {
-                return BadRequest("Invalid account");
-            }
+                if (string.IsNullOrEmpty(query))
+                {
+                    return BadRequest("Invalid name");
+                }
 
-            var result = await _mongoDBService.SearchAsync(genre);
-            if (result == null)
+                var pagedResult = await _mongoDBService.SearchAsync(query, page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("Genre not found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
             {
-                return NotFound("User not found");
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
             }
-
-            return Ok(result);
         }
 
         [Authorize]

@@ -110,6 +110,7 @@ namespace Movie_Ticket_Booking.Service
                 { "movie.name", 1 },
                 { "movie.studio", 1 },
                 { "movie.publishDate", 1 },
+                { "movie.endDate", 1 },
                 { "movie.genre._id", 1 },
                 { "movie.genre.name", 1 },
                 { "movie.type", 1 },
@@ -286,6 +287,8 @@ namespace Movie_Ticket_Booking.Service
                 { "movie.name", 1 },
                 { "movie.studio", 1 },
                 { "movie.publishDate", 1 },
+                { "movie.endDate", 1 },
+
                 { "movie.genre._id", 1 },
                 { "movie.genre.name", 1 },
                 { "movie.type", 1 },

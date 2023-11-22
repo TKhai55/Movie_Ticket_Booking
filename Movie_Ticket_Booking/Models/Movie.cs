@@ -12,6 +12,10 @@ namespace Movie_Ticket_Booking.Models
         public string studio { get; set; } = null!;
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime publishDate { get; set; }
+
+        [BsonRepresentation(BsonType.DateTime)]
+        public DateTime endDate { get; set; }
+
         [BsonRepresentation(BsonType.ObjectId)]
         public List<string> genre { get; set; } = null!;
         public string type { get; set; } = null!;
