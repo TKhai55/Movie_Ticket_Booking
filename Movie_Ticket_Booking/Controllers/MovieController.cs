@@ -71,7 +71,7 @@ namespace Movie_Ticket_Booking.Controllers
                 return NotFound(ex.Message); // Trả về lỗi nếu không tìm thấy hoặc có lỗi trong quá trình cập nhật
             }
         }
-        [HttpGet("searchBasic")]
+        [HttpGet("search")]
         public async Task<ActionResult<PagedResult<MovieWithGenre>>> Search([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
@@ -96,7 +96,7 @@ namespace Movie_Ticket_Booking.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
-        [HttpGet("searchByGenre")]
+        [HttpGet("searchGenre")]
         public async Task<ActionResult<PagedResult<MovieWithGenre>>> SearchByGenre(
     [FromQuery(Name = "genreId")] string genreId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
@@ -115,6 +115,74 @@ namespace Movie_Ticket_Booking.Controllers
             return Ok(pagedResult);
         }
 
+        [HttpGet("getUpcoming")]
+        public async Task<ActionResult<PagedResult<MovieWithGenre>>> GetUpcoming(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var pagedResult = await _mongoDBService.GetUpcomingAsync(page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("No upcoming movies found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("getCurrent")]
+        public async Task<ActionResult<PagedResult<MovieWithGenre>>> GetCurrent(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var pagedResult = await _mongoDBService.GetCurrentAsync(page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("No current movies found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("getCurrent&Upcoming")]
+        public async Task<ActionResult<PagedResult<MovieWithGenre>>> GetAll(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                var pagedResult = await _mongoDBService.GetAll(page, pageSize);
+
+                if (pagedResult.Data == null || pagedResult.Data.Count == 0)
+                {
+                    return NotFound("No current movies found");
+                }
+
+                return Ok(pagedResult);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception if needed
+                return StatusCode(500, "Internal server error");
+            }
+        }
 
         [Authorize]
         [HttpDelete("{id}")]

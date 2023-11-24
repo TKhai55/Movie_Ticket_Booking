@@ -58,7 +58,7 @@ namespace Movie_Ticket_Booking.Controllers
             return Ok(voucher);
         }
 
-        [HttpGet("searchByCodeCustomer")]
+        [HttpGet("searchCustomer")]
         public async Task<ActionResult<Voucher>> GetByVoucher([FromQuery] string code)
         {
             if (string.IsNullOrEmpty(code))
@@ -75,7 +75,7 @@ namespace Movie_Ticket_Booking.Controllers
             return Ok(voucher);
         }
 
-        [HttpGet("searchBasic")]
+        [HttpGet("search")]
         public async Task<ActionResult<PagedResult<Voucher>>> GetByVoucherDefault([FromQuery] string code, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try

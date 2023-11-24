@@ -389,6 +389,157 @@ namespace Movie_Ticket_Booking.Service
         }
 
 
+        public async Task<List<ScheduleFullinfo>> GetByMovieIdAsync(string movieId)
+        {
+            var pipeline = new BsonDocument[]
+                    {
+                     new BsonDocument("$match",
+                        new BsonDocument
+                        {
+                            { "movie", new BsonObjectId(ObjectId.Parse(movieId)) }
+                        }
+                    ),
+                // Perform a left outer join with the "movie" collection
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "movie" },
+                        { "localField", "movie" },  // Assuming "movieId" is the field linking the two collections
+                        { "foreignField", "_id" },
+                        { "as", "movie" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$movie"),
+                new BsonDocument("$lookup",
+                new BsonDocument
+                {
+                    { "from", "genre" },
+                    { "localField", "movie.genre" },  // Assuming "movie.genre" is the field linking the two collections
+                    { "foreignField", "_id" },
+                    { "as", "movie.genre" }
+                }
+            ),
+                // Perform a left outer join with the "theatre" collection
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "theatre" },
+                        { "localField", "theatre" },  // Assuming "theatreId" is the field linking the two collections
+                        { "foreignField", "_id" },
+                        { "as", "theatre" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$theatre"),
+                 new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "ticket" },
+                        { "localField", "bookedSeat" },  // Assuming "seatId" is the field linking the two collections
+                        { "foreignField", "_id" },
+                        { "as", "bookedSeat" }
+                    }
+                ),
+                 new BsonDocument("$unwind", "$bookedSeat"),
+                 new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "seat" },
+                        { "localField", "bookedSeat.seat" },
+                        { "foreignField", "_id" },
+                        { "as", "bookedSeat.seat" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$bookedSeat.seat"),
+                 new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "voucher" },
+                        { "let", new BsonDocument("voucherCode", "$bookedSeat.voucher") },
+                        { "pipeline", new BsonArray
+                            {
+                                new BsonDocument("$match",
+                                    new BsonDocument("$expr",
+                                        new BsonDocument("$eq", new BsonArray { "$code", "$$voucherCode" })
+                                    )
+                                )
+                            }
+                        },
+                        { "as", "bookedSeat.voucher" }
+                    }
+                ),
+                new BsonDocument("$unwind", new BsonDocument
+                    {
+                        { "path", "$bookedSeat.voucher" },
+                        { "preserveNullAndEmptyArrays", true }
+                    }
+                ),
+
+        new BsonDocument("$project",
+            new BsonDocument
+            {
+                { "_id", 1 },
+                { "startTime", 1 },
+                { "endTime", 1 },
+                { "movie._id", 1 },
+                { "movie.name", 1 },
+                { "movie.studio", 1 },
+                { "movie.publishDate", 1 },
+                { "movie.endDate", 1 },
+
+                { "movie.genre._id", 1 },
+                { "movie.genre.name", 1 },
+                { "movie.type", 1 },
+                { "movie.actors", 1 },
+                { "movie.director", 1 },
+                { "movie.description", 1 },
+                { "movie.image", 1 },
+                { "movie.trailer", 1 },
+                { "movie.duration", 1 },
+                { "movie.profit", 1 },
+                { "theatre._id", 1 },
+                { "theatre.name", 1 },
+                { "theatre.description", 1 },
+                { "price", 1 },
+                { "total", 1 },
+                { "bookedSeat._id", 1 },
+                { "bookedSeat.schedule", 1 },
+                { "bookedSeat.seat._id", 1 },
+                { "bookedSeat.seat.theatre", 1 },
+                { "bookedSeat.seat.row", 1 },
+                { "bookedSeat.seat.number", 1 },
+                { "bookedSeat.voucher._id", 1 },
+                { "bookedSeat.voucher.name", 1 },
+                { "bookedSeat.voucher.code", 1 },
+                { "bookedSeat.voucher.description", 1 },
+                { "bookedSeat.voucher.value", 1 },
+                { "bookedSeat.createdAt", 1 },
+                { "bookedSeat.updatedAt", 1 },
+                { "bookedSeat.price", 1 },
+
+            }
+        ),
+        new BsonDocument("$group",
+            new BsonDocument
+            {
+                { "_id", "$_id" },
+                { "startTime", new BsonDocument("$first", "$startTime") },
+                { "endTime", new BsonDocument("$first", "$endTime") },
+                { "movie", new BsonDocument("$first", "$movie") },
+                { "theatre", new BsonDocument("$first", "$theatre") },
+                { "price", new BsonDocument("$first", "$price") },
+                { "total", new BsonDocument("$first", "$total") },
+                { "bookedSeat", new BsonDocument("$push", "$bookedSeat") },
+            }
+        ),
+
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _scheduleCollection.Aggregate<ScheduleFullinfo>(pipeline, options).ToListAsync();
+            return result;
+
+
+        }
 
         public async Task DeleteAsync(string id)
         {

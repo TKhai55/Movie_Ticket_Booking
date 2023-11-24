@@ -52,6 +52,23 @@ namespace Movie_Ticket_Booking.Controllers
             return Ok(schedule);
         }
 
+        [HttpGet("searchByMovieId")]
+        public async Task<ActionResult<List<ScheduleFullinfo>>> GetByMovieId([FromQuery] string movieId)
+        {
+            if (string.IsNullOrEmpty(movieId) || !ObjectId.TryParse(movieId, out _))
+            {
+                return BadRequest("Invalid ID format");
+            }
+
+            var schedule = await _mongoDBService.GetByMovieIdAsync(movieId);
+            if (schedule == null)
+            {
+                return NotFound("Schedule not found");
+            }
+
+            return Ok(schedule);
+        }
+
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(string id, [FromBody] Schedule updatedSchedule)
