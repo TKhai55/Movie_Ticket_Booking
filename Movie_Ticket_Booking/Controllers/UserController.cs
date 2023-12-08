@@ -37,10 +37,10 @@ namespace Movie_Ticket_Booking.Controllers
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-            new Claim(ClaimTypes.Name, user.Id),
+                    new Claim(ClaimTypes.Name, user.Id),
                     // Add additional claims as needed
                 }),
-                Expires = DateTime.UtcNow.AddHours(1), // Token expiration time
+                Expires = DateTime.UtcNow.AddDays(30), // Token expiration time
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -49,6 +49,28 @@ namespace Movie_Ticket_Booking.Controllers
             return Ok(new { Token = tokenString });
         }
 
+        [Authorize]
+        [HttpGet("current")]
+        public IActionResult GetCurrentUserInfo()
+        {
+            // Lấy thông tin của người dùng từ HttpContext.User
+            var userId = HttpContext.User.FindFirst(ClaimTypes.Name)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return NotFound("User not found");
+            }
+
+            // Sử dụng userId để truy vấn thông tin chi tiết của người dùng từ database hoặc nơi lưu trữ khác
+            var user = _mongoDBService.GetByIdAsync(userId).Result;
+
+            if (user == null)
+            {
+                return NotFound("User not found");
+            }
+
+            return Ok(user);
+        }
         [Authorize]
         [HttpGet]
         public async Task<ActionResult<PagedResult<User>>> Get([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
