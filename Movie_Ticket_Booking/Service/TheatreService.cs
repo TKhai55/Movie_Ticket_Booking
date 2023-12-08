@@ -24,12 +24,16 @@ namespace Movie_Ticket_Booking.Service
 
             var pipeline = new BsonDocument[]
             {
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                     new BsonDocument("$limit", pageSize),
             };
+
+            var totalSeats = await _theatreCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _theatreCollection.Aggregate<Theatre>(pipeline, options).ToListAsync();
 
-            var totalPages = (int)Math.Ceiling((double)totalVouchers / pageSize);
+            var totalPages = (int)Math.Ceiling((double)totalSeats / pageSize);
 
             var pagedResult = new PagedResult<Theatre>
             {
