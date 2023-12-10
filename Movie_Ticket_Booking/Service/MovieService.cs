@@ -152,7 +152,7 @@ namespace Movie_Ticket_Booking.Service
                 updateDefinition = updateDefinition.Set(movie => movie.publishDate, updatedMovie.publishDate);
 
             if (updatedMovie.endDate != default)
-                updateDefinition = updateDefinition.Set(movie => movie.publishDate, updatedMovie.publishDate);
+                updateDefinition = updateDefinition.Set(movie => movie.endDate, updatedMovie.endDate);
 
             if (updatedMovie.genre != null)
                 updateDefinition = updateDefinition.Set(movie => movie.genre, updatedMovie.genre);
