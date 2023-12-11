@@ -24,7 +24,12 @@ namespace Movie_Ticket_Booking.Controllers
             var seats = await _mongoDBService.GetAsync(page, pageSize);
             return Ok(seats);
         }
-
+        [HttpGet("search")]
+        public async Task<ActionResult<PagedResult<ScheduleFullinfo>>> SearchSchedules([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            var result = await _mongoDBService.SearchAsync(query, page, pageSize);
+            return Ok(result);
+        }
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Schedule schedule)
