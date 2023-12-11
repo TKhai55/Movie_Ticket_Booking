@@ -17,7 +17,7 @@ namespace Movie_Ticket_Booking.Models
         public Theatre theatre { get; set; } = null!;
         public int price { get; set; } = 0!;
         public int total { get; set; } = 0!;
-        public List<TicketInformation> bookedSeat { get; set; } = null!;
+        public List<TicketInformation>? bookedSeat { get; set; } = null!;
         
     }
 }

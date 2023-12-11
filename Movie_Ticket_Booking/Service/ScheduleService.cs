@@ -56,16 +56,36 @@ namespace Movie_Ticket_Booking.Service
                     }
                 ),
                 new BsonDocument("$unwind", "$theatre"),
+                new BsonDocument("$match",
+                    new BsonDocument("$expr",
+                        new BsonDocument("eq", new BsonArray { new BsonDocument("$size", "$bookedSeat"), 0 })
+                    )
+                ),
                  new BsonDocument("$lookup",
+                new BsonDocument
+                {
+                    { "from", "ticket" },
+                    { "let", new BsonDocument("ticketID", "$bookedSeat") },
+                    { "pipeline", new BsonArray
+                        {
+                            new BsonDocument("$match",
+                                new BsonDocument("$expr",
+                                    new BsonDocument("$in", new BsonArray { "$_id", "$$ticketID" })
+                                )
+                            )
+                        }
+                    },
+                    { "as", "bookedSeat" }
+                }
+            ),
+
+                 new BsonDocument("$unwind",
                     new BsonDocument
                     {
-                        { "from", "ticket" },
-                        { "localField", "bookedSeat" },  // Assuming "seatId" is the field linking the two collections
-                        { "foreignField", "_id" },
-                        { "as", "bookedSeat" }
+                        { "path", "$bookedSeat" },
+                        { "preserveNullAndEmptyArrays", true } 
                     }
                 ),
-                 new BsonDocument("$unwind", "$bookedSeat"),
                  new BsonDocument("$lookup",
                     new BsonDocument
                     {
@@ -75,7 +95,13 @@ namespace Movie_Ticket_Booking.Service
                         { "as", "bookedSeat.seat" }
                     }
                 ),
-                new BsonDocument("$unwind", "$bookedSeat.seat"),
+                new BsonDocument("$unwind",
+                    new BsonDocument
+                    {
+                        { "path", "$bookedSeat.seat" },
+                        { "preserveNullAndEmptyArrays", true }
+                    }
+                ),
                 new BsonDocument("$lookup",
                     new BsonDocument
                     {
@@ -140,6 +166,7 @@ namespace Movie_Ticket_Booking.Service
                 { "bookedSeat.createdAt", 1 },
                 { "bookedSeat.updatedAt", 1 },
                 { "bookedSeat.price", 1 },
+
             }
         ),
         new BsonDocument("$group",
@@ -155,6 +182,7 @@ namespace Movie_Ticket_Booking.Service
                 { "bookedSeat", new BsonDocument("$push", "$bookedSeat") },
             }
         ),
+
         new BsonDocument("$sort",
             new BsonDocument
             {
