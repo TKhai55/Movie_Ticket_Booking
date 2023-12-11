@@ -11,6 +11,7 @@ namespace Movie_Ticket_Booking.Models
 
         public string title { get; set; } = null!;
         public string content { get; set; } = null!;
+        public string imageURL { get; set; } = null!;
         [BsonRepresentation(BsonType.DateTime)]
         public DateTime createdAt { get; set; }
         [BsonRepresentation(BsonType.DateTime)]
