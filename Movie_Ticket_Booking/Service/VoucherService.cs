@@ -23,8 +23,9 @@ namespace Movie_Ticket_Booking.Service
 
             var pipeline = new BsonDocument[]
             {
-                 new BsonDocument("$skip", (page - 1) * pageSize),
-                     new BsonDocument("$limit", pageSize),
+                new BsonDocument("$sort", new BsonDocument("isActive", -1)), // -1 for descending order
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                new BsonDocument("$limit", pageSize),
             };
 
             var totalSeats = await _voucherCollection.CountDocumentsAsync(new BsonDocument());
@@ -44,6 +45,7 @@ namespace Movie_Ticket_Booking.Service
 
             return pagedResult;
         }
+
         public async Task<bool> IsCodeUniqueAsync(string code)
         {
             var existingVoucher = await _voucherCollection.Find(x => x.code == code).FirstOrDefaultAsync();
@@ -71,16 +73,26 @@ namespace Movie_Ticket_Booking.Service
 
         public async Task<Voucher> GetByVoucherCustomerAsync(string code)
         {
-            var filter = Builders<Voucher>.Filter.Eq(t => t.code, code);
+            var filter = Builders<Voucher>.Filter.Eq(t => t.code, code) & Builders<Voucher>.Filter.Eq(t => t.isActive, true);
+
             var voucher = await _voucherCollection.Find(filter).FirstOrDefaultAsync();
+
             return voucher;
         }
+
 
         public async Task<PagedResult<Voucher>> GetByVoucherBasicAsync(string code, int page = 1, int pageSize = 10)
         {
             var pipeline = new BsonDocument[]
             {
-                new BsonDocument("$match", new BsonDocument("code", new BsonRegularExpression(new Regex(code, RegexOptions.IgnoreCase)))),
+                new BsonDocument("$match", new BsonDocument("$or", new BsonArray
+                {
+                    new BsonDocument("name", new BsonRegularExpression(code, "i")),
+                    new BsonDocument("description", new BsonRegularExpression(code, "i")),
+                    new BsonDocument("value", new BsonRegularExpression(code, "i")),
+                    new BsonDocument("code", new BsonRegularExpression(code, "i"))
+                })),
+                new BsonDocument("$sort", new BsonDocument("isActive", -1)),
                 new BsonDocument("$skip", (page - 1) * pageSize),
                 new BsonDocument("$limit", pageSize),
             };
@@ -116,6 +128,8 @@ namespace Movie_Ticket_Booking.Service
                 updateDefinition = updateDefinition.Set(voucher => voucher.description, updatedVoucher.description);
             if (updatedVoucher.value != default)
                 updateDefinition = updateDefinition.Set(voucher => voucher.value, updatedVoucher.value);
+            if (!updatedVoucher.isActive)
+                updateDefinition = updateDefinition.Set(voucher => voucher.isActive, updatedVoucher.isActive);
 
             await _voucherCollection.UpdateOneAsync(filter, updateDefinition);
         }
