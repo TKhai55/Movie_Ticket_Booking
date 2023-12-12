@@ -2,6 +2,7 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Movie_Ticket_Booking.Models;
+using System.Text.RegularExpressions;
 
 namespace Movie_Ticket_Booking.Service
 {
@@ -88,6 +89,31 @@ namespace Movie_Ticket_Booking.Service
             await _theatreCollection.UpdateOneAsync(filter, updateDefinition);
         }
 
+        public async Task<PagedResult<Theatre>> SearchAsync(string name, int page = 1, int pageSize = 10)
+        {
+            var pipeline = new BsonDocument[]
+            {
+                new BsonDocument("$match", new BsonDocument("name", new BsonRegularExpression(new Regex(name, RegexOptions.IgnoreCase)))),
+                new BsonDocument("$skip", (page - 1) * pageSize),
+                new BsonDocument("$limit", pageSize),
+            };
+
+            var options = new AggregateOptions { AllowDiskUse = false };
+            var result = await _theatreCollection.Aggregate<Theatre>(pipeline, options).ToListAsync();
+
+            var totalItems = await _theatreCollection.CountDocumentsAsync(new BsonDocument("name", new BsonRegularExpression(new Regex(name, RegexOptions.IgnoreCase))));
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+            var pagedResult = new PagedResult<Theatre>
+            {
+                Page = page,
+                PageSize = pageSize,
+                TotalPages = totalPages,
+                Data = result
+            };
+
+            return pagedResult;
+        }
         public async Task DeleteAsync(string id)
         {
             // Tìm theatre cần xoá
