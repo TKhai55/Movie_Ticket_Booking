@@ -14,5 +14,6 @@ namespace Movie_Ticket_Booking.Models
 
         public string description { get; set; } = null!;
         public int value { get; set; } = 0!;
+        public Boolean isActive { get; set; } = true!;
     }
 }
