@@ -128,7 +128,7 @@ namespace Movie_Ticket_Booking.Service
                 updateDefinition = updateDefinition.Set(voucher => voucher.description, updatedVoucher.description);
             if (updatedVoucher.value != default)
                 updateDefinition = updateDefinition.Set(voucher => voucher.value, updatedVoucher.value);
-            if (!updatedVoucher.isActive)
+            if (updatedVoucher.isActive == true || updatedVoucher.isActive == false)
                 updateDefinition = updateDefinition.Set(voucher => voucher.isActive, updatedVoucher.isActive);
 
             await _voucherCollection.UpdateOneAsync(filter, updateDefinition);
