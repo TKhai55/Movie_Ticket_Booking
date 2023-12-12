@@ -35,6 +35,7 @@ namespace Movie_Ticket_Booking.Service
                          { "_id", 1 },
                          { "title", 1 },
                          { "content", 1 },
+                         { "imageURL", 1 },
                          { "createdAt", 1 },
                          { "updatedAt", 1 },
                          { "creator._id", 1 },
@@ -95,6 +96,7 @@ namespace Movie_Ticket_Booking.Service
                          { "_id", 1 },
                          { "title", 1 },
                          { "content", 1 },
+                         { "imageURL", 1 },
                          { "createdAt", 1 },
                          { "updatedAt", 1 },
                          { "creator._id", 1 },
@@ -132,6 +134,11 @@ namespace Movie_Ticket_Booking.Service
                 {
                     update = update.Set("content", updatedNews.content);
                 }
+
+                if (!string.IsNullOrEmpty(updatedNews.imageURL))
+                {
+                    update = update.Set("imageURL", updatedNews.imageURL);
+                }
             }
 
             // Thực hiện cập nhật
@@ -167,6 +174,7 @@ namespace Movie_Ticket_Booking.Service
                     { "_id", 1 },
                     { "title", 1 },
                     { "content", 1 },
+                    { "imageURL", 1 },
                     { "createdAt", 1 },
                     { "updatedAt", 1 },
                     { "creator._id", 1 },
