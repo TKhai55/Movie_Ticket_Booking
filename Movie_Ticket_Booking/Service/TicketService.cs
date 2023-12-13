@@ -27,6 +27,36 @@ namespace Movie_Ticket_Booking.Service
                 new BsonDocument("$lookup",
                     new BsonDocument
                     {
+                        { "from", "schedule" },
+                        { "localField", "schedule" },
+                        { "foreignField", "_id" },
+                        { "as", "schedule" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$schedule"),
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "movie" },
+                        { "localField", "schedule.movie" },
+                        { "foreignField", "_id" },
+                        { "as", "schedule.movie" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$schedule.movie"),
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "theatre" },
+                        { "localField", "schedule.theatre" },
+                        { "foreignField", "_id" },
+                        { "as", "schedule.theatre" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$schedule.theatre"),
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
                         { "from", "seat" },
                         { "localField", "seat" },
                         { "foreignField", "_id" },
