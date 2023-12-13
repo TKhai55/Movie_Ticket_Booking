@@ -194,26 +194,55 @@ namespace Movie_Ticket_Booking.Service
                         }
                     ),
                  new BsonDocument("$lookup",
-                     new BsonDocument
-                     {
-                         { "from", "seat" },
-                         { "localField", "seat" },
-                         { "foreignField", "_id" },
-                         { "as", "seat" }
-                     }
-
-                  ),
-                 new BsonDocument("$unwind", "$seat"),
-                 new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "schedule" },
+                        { "localField", "schedule" },
+                        { "foreignField", "_id" },
+                        { "as", "schedule" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$schedule"),
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "movie" },
+                        { "localField", "schedule.movie" },
+                        { "foreignField", "_id" },
+                        { "as", "schedule.movie" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$schedule.movie"),
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "theatre" },
+                        { "localField", "schedule.theatre" },
+                        { "foreignField", "_id" },
+                        { "as", "schedule.theatre" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$schedule.theatre"),
+                new BsonDocument("$lookup",
+                    new BsonDocument
+                    {
+                        { "from", "seat" },
+                        { "localField", "seat" },
+                        { "foreignField", "_id" },
+                        { "as", "seat" }
+                    }
+                ),
+                new BsonDocument("$unwind", "$seat"),
+                new BsonDocument("$lookup",
                     new BsonDocument
                     {
                         { "from", "voucher" },
-                        { "let", new BsonDocument("voucherId", "$voucher") },
+                        { "let", new BsonDocument("voucherCode", "$voucher") },
                         { "pipeline", new BsonArray
                             {
                                 new BsonDocument("$match",
                                     new BsonDocument("$expr",
-                                        new BsonDocument("$eq", new BsonArray { "$_id", "$$voucherId" })
+                                        new BsonDocument("$eq", new BsonArray { "$code", "$$voucherCode" })
                                     )
                                 )
                             }
@@ -227,25 +256,25 @@ namespace Movie_Ticket_Booking.Service
                         { "preserveNullAndEmptyArrays", true }
                     }
                 ),
-                 new BsonDocument("$project",
-                     new BsonDocument
-                     {
-                         { "_id", 1 },
-                         { "schedule", 1 },
-                         { "voucher._id", 1 },
-                         { "voucher.name", 1 },
-                         { "voucher.code", 1 },
-                         { "voucher.value", 1 },
-                         { "voucher.description", 1 },
-
-                         { "seat._id", 1 },
-                         { "seat.theatre", 1 },
-                         { "seat.row", 1 },
-                         { "seat.number", 1 },
-                         { "createdAt", 1 },
-                         { "updatedAt", 1 },
-                         { "price", 1 },
-                     }),
+                new BsonDocument("$project",
+                    new BsonDocument
+                    {
+                        { "_id", 1 },
+                        { "schedule", 1 },
+                        { "voucher._id", 1 },
+                        { "voucher.name", 1 },
+                        { "voucher.code", 1 },
+                        { "voucher.value", 1 },
+                        { "voucher.description", 1 },
+                        { "seat._id", 1 },
+                        { "seat.theatre", 1 },
+                        { "seat.row", 1 },
+                        { "seat.number", 1 },
+                        { "createdAt", 1 },
+                        { "updatedAt", 1 },
+                        { "price", 1 },
+                    }
+                ),
              };
 
             var options = new AggregateOptions { AllowDiskUse = false };
