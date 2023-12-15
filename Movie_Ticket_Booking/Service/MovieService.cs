@@ -343,9 +343,7 @@ namespace Movie_Ticket_Booking.Service
         new BsonDocument("$limit", pageSize),
             };
 
-            var totalUpcomingMovies = await _movieCollection.CountDocumentsAsync(
-                new BsonDocument { { "publishDate", new BsonDocument("$gt", currentDate) } }
-            );
+            var totalUpcomingMovies = await _movieCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _movieCollection.Aggregate<MovieWithGenre>(pipeline, options).ToListAsync();
@@ -415,9 +413,7 @@ namespace Movie_Ticket_Booking.Service
         new BsonDocument("$limit", pageSize),
             };
 
-            var totalUpcomingMovies = await _movieCollection.CountDocumentsAsync(
-                new BsonDocument { { "publishDate", new BsonDocument("$gt", currentDate) } }
-            );
+            var totalUpcomingMovies = await _movieCollection.CountDocumentsAsync(new BsonDocument());
 
             var options = new AggregateOptions { AllowDiskUse = false };
             var result = await _movieCollection.Aggregate<MovieWithGenre>(pipeline, options).ToListAsync();

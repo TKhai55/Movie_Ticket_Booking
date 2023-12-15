@@ -431,7 +431,7 @@ namespace Movie_Ticket_Booking.Service
                         new BsonDocument
                         {
 
-                            { "_id", new BsonObjectId(ObjectId.Parse(id)) }
+                            { "movie", new BsonObjectId(ObjectId.Parse(id)) }
                         }
                     ),
                 // Perform a left outer join with the "movie" collection
