@@ -567,5 +567,13 @@ namespace Movie_Ticket_Booking.Service
             result.Add("profits", profits);
             return result;
         }
+
+        public List<Movie> GetTop10FilmsByProfit()
+        {
+            var sortDefinition = Builders<Movie>.Sort.Descending(f => f.profit);
+            var films = _movieCollection.Find(Builders<Movie>.Filter.Empty).Sort(sortDefinition).Limit(10).ToList();
+
+            return films;
+        }
     }
 }
