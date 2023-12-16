@@ -431,7 +431,7 @@ namespace Movie_Ticket_Booking.Service
                         new BsonDocument
                         {
 
-                            { "movie", new BsonObjectId(ObjectId.Parse(id)) }
+                            { "_id", new BsonObjectId(ObjectId.Parse(id)) }
                         }
                     ),
                 // Perform a left outer join with the "movie" collection
@@ -591,6 +591,12 @@ namespace Movie_Ticket_Booking.Service
                 { "bookedSeat", new BsonDocument("$push", "$bookedSeat") },
             }
         ),
+        new BsonDocument("$sort",
+            new BsonDocument
+            {
+                { "startTime", 1 }
+            }
+        ),
 
             };
 
@@ -600,6 +606,7 @@ namespace Movie_Ticket_Booking.Service
 
 
         }
+
         public async Task<(bool success, string errorMessage)> UpdateAsync(string id, Schedule updatedSchedule)
         {
             var filter = Builders<Schedule>.Filter.Eq(schedule => schedule.Id, id);
@@ -814,7 +821,12 @@ namespace Movie_Ticket_Booking.Service
                 { "bookedSeat", new BsonDocument("$push", "$bookedSeat") },
             }
         ),
-
+        new BsonDocument("$sort",
+            new BsonDocument
+            {
+                { "startTime", 1 }
+            }
+        ),
             };
 
             var options = new AggregateOptions { AllowDiskUse = false };
