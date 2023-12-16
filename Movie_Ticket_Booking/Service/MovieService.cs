@@ -546,5 +546,26 @@ namespace Movie_Ticket_Booking.Service
 
             return monthlyTotals;
         }
+
+        public Dictionary<string, List<object>> GetMoviesProfit()
+        {
+            var filter = Builders<Movie>.Filter.Gt("profit", 0);
+            var films = _movieCollection.Find(filter).ToList();
+
+            var result = new Dictionary<string, List<object>>();
+
+            var names = new List<object>();
+            var profits = new List<object>();
+
+            foreach (var film in films)
+            {
+                names.Add(film.name);
+                profits.Add(film.profit);
+            }
+
+            result.Add("names", names);
+            result.Add("profits", profits);
+            return result;
+        }
     }
 }
