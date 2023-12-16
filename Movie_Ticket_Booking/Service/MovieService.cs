@@ -575,5 +575,18 @@ namespace Movie_Ticket_Booking.Service
 
             return films;
         }
+
+        public async Task<int> GetTotalMoviesQuantity()
+        {
+            try
+            {
+                var totalQuantity = await _movieCollection.CountDocumentsAsync(_ => true);
+                return (int)totalQuantity;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Error getting total movies quantity: {ex.Message}");
+            }
+        }
     }
 }

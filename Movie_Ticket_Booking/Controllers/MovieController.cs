@@ -213,5 +213,20 @@ namespace Movie_Ticket_Booking.Controllers
 
             return Ok(movies);
         }
+
+        [HttpGet("total-quantity")]
+        public async Task<IActionResult> GetTotalMoviesQuantityAsync()
+        {
+            try
+            {
+                var totalQuantity = await _mongoDBService.GetTotalMoviesQuantity();
+
+                return Ok(new { TotalQuantity = totalQuantity });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
     }
 }
