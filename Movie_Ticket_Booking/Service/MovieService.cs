@@ -523,5 +523,28 @@ namespace Movie_Ticket_Booking.Service
             await _movieCollection.DeleteOneAsync(filter);
             return;
         }
+
+        public int[] GetTotalFilmsPerMonth()
+        {
+            var pipeline = new List<BsonDocument>
+            {
+                BsonDocument.Parse("{ $group: { _id: { $month: '$publishDate' }, count: { $sum: 1 } } }"),
+                BsonDocument.Parse("{ $sort: { '_id': 1 } }")
+            };
+
+            var aggregationResult = _movieCollection.Aggregate<BsonDocument>(pipeline).ToList();
+
+            var monthlyTotals = new int[12]; 
+
+            foreach (var result in aggregationResult)
+            {
+                var month = result["_id"].AsInt32;
+                var count = result["count"].AsInt32;
+
+                monthlyTotals[month - 1] = count;
+            }
+
+            return monthlyTotals;
+        }
     }
 }

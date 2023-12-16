@@ -192,5 +192,11 @@ namespace Movie_Ticket_Booking.Controllers
             return Ok("Delete successfully");
         }
 
+        [HttpGet("total-films-per-month")]
+        public ActionResult<Dictionary<int, int>> GetTotalFilmsPerMonth()
+        {
+            var result = _mongoDBService.GetTotalFilmsPerMonth();
+            return Ok(result);
+        }
     }
 }
