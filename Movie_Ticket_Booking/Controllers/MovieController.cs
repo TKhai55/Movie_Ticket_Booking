@@ -205,5 +205,13 @@ namespace Movie_Ticket_Booking.Controllers
             var films = _mongoDBService.GetMoviesProfit();
             return Ok(films);
         }
+
+        [HttpGet("top-10-movies-by-profit")]
+        public ActionResult<List<Movie>> GetTop10MoviesByProfit()
+        {
+            var movies = _mongoDBService.GetTop10FilmsByProfit();
+
+            return Ok(movies);
+        }
     }
 }
