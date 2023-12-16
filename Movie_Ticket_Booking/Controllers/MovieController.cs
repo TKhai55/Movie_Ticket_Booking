@@ -198,5 +198,12 @@ namespace Movie_Ticket_Booking.Controllers
             var result = _mongoDBService.GetTotalFilmsPerMonth();
             return Ok(result);
         }
+
+        [HttpGet("movies-profit")]
+        public ActionResult<List<Movie>> GetFilmsWithProfitGreaterThanZero()
+        {
+            var films = _mongoDBService.GetMoviesProfit();
+            return Ok(films);
+        }
     }
 }
