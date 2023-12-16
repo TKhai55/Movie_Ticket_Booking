@@ -133,5 +133,17 @@ namespace Movie_Ticket_Booking.Service
             await _seatCollection.DeleteManyAsync(seatFilter);
         }
 
+        public async Task<int> GetTotalTheatreQuantity()
+        {
+            try
+            {
+                var totalQuantity = await _theatreCollection.CountDocumentsAsync(_ => true);
+                return (int)totalQuantity;
+            }
+            catch (Exception ex)
+            {
+                throw new ApplicationException($"Error getting total theatre quantity: {ex.Message}");
+            }
+        }
     }
 }
